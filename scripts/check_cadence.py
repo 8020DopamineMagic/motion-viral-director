@@ -33,7 +33,9 @@ MIN_BREATHING_PCT = 15.0
 MAX_SPEECH_FRACTION = 0.85      # leaves 15% breathing room
 COMFORT_SPEECH_FRACTION = 0.75  # leaves 25%
 
-_WORD = re.compile(r"[^\W_]+(?:[’':.\-][^\W_]+)*", re.UNICODE)
+# Hyphens split words ("forty-seven" is two spoken words): the stricter count for pace.
+_WORD = re.compile(r"[^\W_]+(?:[’':.][^\W_]+)*", re.UNICODE)
+_NUMERAL_OR_ACRONYM = re.compile(r"\d|\b[A-Z]{2,}\b")
 _RANGE = re.compile(r"\s*(?:-->|[-–—]+|\bto\b)\s*")
 
 
@@ -95,9 +97,16 @@ def measure(text, seconds):
         need = max(words / MAX_WPM * 60.0, chars / MAX_CPS, words * MIN_SEC_PER_WORD)
         keep = min(int(seconds * MAX_WPM / 60.0), int(seconds / MIN_SEC_PER_WORD))
         issues.append({"code": "fix", "message": f"give this line {need:.1f} s, or cut it to {keep} words"})
+    notes = []
+    found = sorted(set(re.findall(r"[$€£]?\d[\d:.,]*%?|\b[A-Z]{2,}\b", text)))
+    if found:
+        notes.append({"code": "spoken_count", "message": (
+            f"numerals or acronyms ({', '.join(found)}) are counted as one word each; spoken aloud they "
+            "are usually more ('$400' = four hundred dollars, 'HVAC' = four letters). Write them as spoken "
+            "and re-check before trusting the pace")})
     return {"words": words, "chars": chars, "seconds": round(seconds, 3), "wpm": round(wpm, 1),
             "cps": round(cps, 1), "sec_per_word": round(spw, 2) if spw else None,
-            "issues": issues, "passed": not issues}
+            "issues": issues, "notes": notes, "passed": not issues}
 
 
 def analyze_beats(beats):

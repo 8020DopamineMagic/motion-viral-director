@@ -146,3 +146,32 @@ def test_cli_exit_codes(tmp_path):
     missing = subprocess.run([sys.executable, str(SCRIPT), str(tmp_path / "nope.srt")],
                              capture_output=True, text=True)
     assert missing.returncode == 2
+
+
+# Iteration 2: found by the eval runs.
+
+def test_speaker_labels_are_read_but_not_spoken():
+    """'DRIVER 2:' adds reading load (chars) but is not speech, so it stays out of WPM."""
+    r = vc.validate(srt(("00:00:00,000", "00:00:03,000", "DRIVER 2: I kept meaning to call you back, Dad")),
+                    aspect="16:9")
+    cue = r["cues"][0]
+    assert cue["words"] == 8
+    assert cue["wpm"] == 160.0
+    assert "wpm" not in codes(r)
+    assert cue["chars"] == len("DRIVER 2: I kept meaning to call you back, Dad")  # 10 words with the label: 200 WPM
+
+
+@pytest.mark.parametrize("label", [">> ", "- ", "SPARROW: ", "[RADIO] "])
+def test_other_speaker_markers_do_not_count_as_words(label):
+    r = vc.validate(srt(("00:00:00,000", "00:00:02,000", f"{label}Ten-four, good buddy")), aspect="16:9")
+    assert r["cues"][0]["words"] == 4  # "Ten-four" is two spoken words
+
+
+def test_sentence_final_weak_word_is_not_a_weak_break():
+    r = vc.validate(srt(("00:00:00,000", "00:00:02,500", "Kept meaning to.\nThen the road")), aspect="16:9")
+    assert "weak_line_break" not in codes(r)
+
+
+def test_mid_sentence_weak_word_still_warns():
+    r = vc.validate(srt(("00:00:00,000", "00:00:02,500", "I kept meaning to\ncall you back")), aspect="16:9")
+    assert "weak_line_break" in codes(r, "warning")

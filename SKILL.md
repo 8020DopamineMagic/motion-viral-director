@@ -20,7 +20,7 @@ Look for `references/`, `scripts/` and `assets/` beside this file.
 
 - **Present:** load reference files only when the task needs them (table in section 1) and run the scripts in section 5.
 - **Absent (a skill saved from a chat card keeps only this file):** when the task needs a reference, a template or a validator and you can run shell commands, fetch the kit once into the working directory, reusing the folder if it is already there:
-  `git clone --depth 1 --branch v1.1.0 https://github.com/8020DopamineMagic/motion-viral-director motion-viral-director`
+  `GIT_TERMINAL_PROMPT=0 git clone --depth 1 --branch v1.1.0 https://github.com/8020DopamineMagic/motion-viral-director motion-viral-director`
   Then treat that folder as this skill's folder: read `motion-viral-director/references/`, copy from `motion-viral-director/assets/`, run `python motion-viral-director/scripts/<name>`. Use only that tag.
 - **Clone fails, or no shell:** this file is complete on its own. Use the numbers in section 6, and when a check needs arithmetic, write a few lines of throwaway code with the formulas given there instead of judging by eye. Note under pending checks that the bundled validators were unavailable.
 
@@ -72,12 +72,12 @@ A missing detail rarely justifies stopping. Adopt the default, list it in a shor
 
 1. **Stage before you render.** For anything over 30 seconds, lock in this order: brief, script, 3-6 styleframes, storyboard, timed animatic. Then animate, mix and QA. Changing a sentence in a script costs seconds; changing it after animation costs the animation. Stop at the Go / No-Go gate before any step that spends money or hours, unless the person waives pre-production.
 2. **Never blend formats.** Fast cuts exhaust a long-form viewer; a slow fade loses a feed viewer before the first word. Use the column for the format you fixed in section 1.
-3. **Build the short-form hook in three layers.** 0.0-0.5 s: a hard cut on frame 0 to motion, a contrast or a 5-8 word headline that reads on mute. No fade-in, no logo bumper. 0.5-1.5 s: one spoken sentence carrying the topic keyword plus tension, curiosity or proof. 1.5-3.0 s: who this is for and the payoff that is coming. Backstory waits until after second 5.
+3. **Build the short-form hook in three layers.** 0.0-0.5 s: a hard cut on frame 0 to motion, a contrast or a 5-8 word headline that reads on mute. No fade-in, no logo bumper. 0.5-1.5 s: one spoken sentence carrying the topic keyword plus tension, curiosity or proof. 1.5-3.0 s: who this is for and the payoff that is coming (in a narrative piece, the stakes can take this slot instead). Backstory waits until after second 5.
 4. **Long-form opens by keeping the promise.** Show what the thumbnail and title promised in the first frames, raise the stakes, and open one question big enough to carry the runtime. No greeting.
 5. **Chain beats with BUT or THEREFORE.** If two beats are joined by "and then", one of them is not earning its place. Do not announce sections ("moving on to step two"); that hands the viewer an exit. Start the next beat's picture or conflict while the last sentence of the current one finishes.
 6. **When a cut forces a trade, protect in this order:** emotion 51%, story 23%, rhythm 10%, eye-trace 7%, 2D screen plane 5%, 3D space 4% (Walter Murch's Rule of Six). An emotionally true cut beats tidy continuity.
 7. **One hero mover per beat.** Things that move together are read as belonging together (Common Fate), so only related elements share a move. Colour is 60% quiet ground, 30% structure, 10% accent saved for the focal point or the CTA.
-8. **Audit hierarchy before animating.** Squint or blur the styleframe: does the right thing dominate? Remove colour: does the order survive? Could a first-time viewer name the subject in 3 seconds with no sound? Motion amplifies a composition; it does not repair one.
+8. **Audit hierarchy before animating.** Squint or blur the styleframe: does the right thing dominate? Remove colour: does the order survive? Could a first-time viewer name the subject in 3 seconds with no sound? Motion amplifies a composition; it does not repair one. A box inside the safe zone can still overflow with its own text, so render a layout frame with the real font and look at it (or estimate about 0.6 x font size per character for a sans). Move boxes as a set, not one at a time: separate fixes can land on each other.
 9. **Match the curve to the job.** Productive easing for data and interface moves, expressive curves or damped springs for hero and emotional beats, linear only for mechanical loops. Springs suit interactive and programmatic motion; cubic-beziers suit timelines where a frame must land on a downbeat. Opacity and colour never overshoot.
 10. **Speech owns the mix.** Dialogue sits 15-25 dB above music, music ducks 3-5 dB under speech and swells only in gaps, a short true silence goes right before the reveal. Master to the platform target, not for loudness: platforms normalise, so over-limiting only makes it sound crushed.
 11. **Captions must be readable at speed and on mute.** Hold the limits in section 6, break lines at phrase boundaries, and check the piece makes sense with the sound off.
@@ -114,7 +114,7 @@ Validators (run with `python scripts/<name>` from this skill's folder, or from t
 |---|---|---|
 | `check_cadence.py` | script text, or a beats file of `START-END \| spoken copy` | WPM, chars/s and s/word per beat; overall pace; breathing room; whether a script fits a runtime |
 | `validate_captions.py` | `.srt` or `.vtt` | reading speed, density, duration, line length and count, overlaps, weak line breaks |
-| `check_safe_zones.py` | overlay boxes in pixels | whether text, logos and CTAs clear platform UI on 9:16, with a corrected position |
+| `check_safe_zones.py` | overlay boxes in pixels | whether text, logos and CTAs clear platform UI on 9:16, a corrected position, and boxes that collide as given or after the fixes |
 | `check_contrast.py` | hex pairs, or text colour plus a translucent scrim | WCAG ratio, pass or fail, a passing alternative, minimum scrim opacity over moving footage |
 | `audit_media.py` | video file | streams, aspect ratio, integrated loudness, true peak, short-term jumps, and the command that would fix loudness |
 | `extract_contact_sheet.py` | video file | colour, grayscale, blurred and first-3-seconds sheets. Open them and judge; exporting is not checking |
@@ -138,6 +138,7 @@ Without the kit: compute pacing and contrast with a few lines of code from secti
 | Line length | 9:16, 4:5, 1:1: 25 chars, up to 3 lines. 16:9: 42 chars, 2 lines (BBC: 37) | BBC, Netflix |
 | Narration baseline | 130-150 WPM, leaving 15-25% of runtime free of speech | convention |
 
+Count words as they are spoken: hyphenated words split ("forty-seven" is 2), numerals and acronyms as said aloud ("$400" is 3, "HVAC" is 4). Speaker labels and sound tags are read but not spoken: they count toward chars/s, not WPM.
 Word budget for a runtime: `seconds x 0.85 x WPM / 60`. At 140 WPM a 45 s piece holds at most 89 words, and about 78 with comfortable room.
 WPM = `words / seconds x 60`. CPS = `characters including spaces / seconds`.
 
@@ -156,7 +157,8 @@ Paid placements reserve more space than organic posts; test an ad spec with `--m
 
 **Contrast and flashing (WCAG 2.2)**
 
-- Text and captions at least 4.5:1; large text at least 3.0:1. Compare unrounded: 4.48 fails.
+- Text and captions at least 4.5:1; large text at least 3.0:1 (say which pairs you are treating as large). Compare unrounded: 4.48 fails.
+- Check every text-on-background combination the plan uses, not just the palette: accent-coloured words on a scrim, text over footage, badge labels.
 - Ratio = `(L1 + 0.05) / (L2 + 0.05)`, lighter over darker, where `L = 0.2126 R + 0.7152 G + 0.0722 B` and each channel is linearised: `c/12.92` if `c <= 0.04045`, else `((c + 0.055)/1.055)^2.4`, with `c` the 0-1 sRGB value.
 - Captions over moving footage: put them on a scrim and test the worst case (bright footage behind it). White text on black needs at least 54% opacity.
 - At most 3 flashes in any one second, general or saturated red.
@@ -171,6 +173,8 @@ Paid placements reserve more space than organic posts; test an ad spec with `--m
 | Broadcast, Europe (EBU R128) | -23 LUFS | -1.0 dBTP |
 | Broadcast, North America (ATSC A/85) | -24 LKFS | -2.0 dBTP |
 
+A vertical cut posted to TikTok, Reels and Shorts needs either two exports (-16 for TikTok and Reels, -14 for Shorts) or one -14 master that TikTok and Reels may turn down. Say which.
+
 Mix order: dialogue peaking near -12 dBFS; hard SFX and foley -10 to -20; design SFX -12 to -25; music -20 to -30 under speech, ducked 3-5 dB; ambience -30 to -40 with at least 30 s of room tone; a clean silence of 0.3-1.5 s before a reveal. J-cuts lead the picture by 0.3-1.5 s. Check every export on headphones, laptop speakers and a phone speaker.
 
 **Motion**
@@ -183,10 +187,10 @@ Mix order: dialogue peaking near -12 dBFS; hard SFX and foley -10 to -20; design
 
 Use the template in `assets/` when the kit is present; otherwise follow these shapes.
 
-- **Every deliverable:** a one-line statement of mode and format; the Working assumptions block; the work; the verification summary (executed, then pending).
+- **Every deliverable:** a one-line statement of mode and format; the Working assumptions block; the work; the verification summary (executed, then pending). Any fix the person has to carry out is a step they can do with their own tools: a full ffmpeg command, an editor setting, exact new values. Never tell them to run this skill's scripts; they may not have them.
 - **AV script:** header (title, format, aspect, runtime, narrative engine, loudness target, AI disclosure status), then a table with columns *Timecode | Beat and connector (BUT / THEREFORE) | Visual, motion, focal point, safe zone | Spoken copy, SFX, music, silence, cut type*. Timecodes to a tenth of a second for the first 15 seconds. Give the pace of each spoken line. Short-form scripts end on a line that flows back into frame 0 when a loop is wanted.
 - **Brief or proposal:** audience and goal, acceptance criteria, format and deliverables, concept, visual and sonic direction, beat sheet, pipeline split into what you can produce now and what needs outside tools or people, risks with controls, and a Go / No-Go gate listing the 3-5 decisions needed to proceed. Stop there.
-- **Audit:** verdict first (ready, not ready, blocked), then findings ordered blocking, should fix, polish. Each finding names the timecode or line, the rule it breaks with the measured value, and the specific fix.
+- **Audit:** verdict first (ready, not ready, blocked), then findings ordered blocking, should fix, polish. Each finding names the timecode or line, the rule it breaks with the measured value, and the specific fix. Re-run the checks on each fix (corrected captions, positions, colours, loudness) and report the result. Before describing audio as noise or as having no voice, look at a spectrum (`ffmpeg -i in.mp4 -lavfi showspectrumpic=s=1200x600 spec.png`): a steady tone or hum changes the fix.
 - **Retention diagnosis:** the curve pattern you see, the most likely cause, the evidence that would confirm it, the rewrite or re-cut, and the metric to watch next. Change the packaging or the first frames before abandoning a topic.
 - **Motion spec:** palette by 60-30-10 role with hex values and contrast ratios, type, grid, easing tokens with durations, and per-beat notes naming the hero mover.
 - **Compliance answer:** per platform, whether a label is required, the dated rule behind it, the exact setting to change, and what stays pending. Add one line that this is not legal advice when rights, advertising or copyright registration are involved.

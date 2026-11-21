@@ -81,3 +81,30 @@ def test_cli_single_box_and_multi_platform(tmp_path):
     assert [(r["name"], r["passed"]) for r in out["results"]] == [("headline", True), ("cta", False)]
     p = subprocess.run([sys.executable, str(SCRIPT), "--list"], capture_output=True, text=True)
     assert p.returncode == 0 and json.loads(p.stdout)["universal_3feed"]["safe_size"] == [875, 1076]
+
+
+# Iteration 2: boxes fixed one at a time can land on each other.
+
+def test_layout_reports_overlapping_boxes():
+    boxes = [{"name": "headline", "x": 100, "y": 300, "w": 700, "h": 200},
+             {"name": "logo", "x": 700, "y": 250, "w": 120, "h": 120}]
+    out = sz.check_layout(boxes, "universal_3feed")
+    assert [tuple(o["boxes"]) for o in out["overlaps"]] == [("headline", "logo")]
+
+
+def test_layout_reports_collisions_created_by_per_box_fixes():
+    boxes = [{"name": "caption_box", "x": 110, "y": 1040, "w": 780, "h": 200},
+             {"name": "cta_button", "x": 90, "y": 1500, "w": 900, "h": 140}]
+    out = sz.check_layout(boxes, "universal_3feed")
+    assert out["overlaps"] == []
+    assert [tuple(o["boxes"]) for o in out["fix_overlaps"]] == [("caption_box", "cta_button")]
+    assert out["fix_overlaps"][0]["overlap_px"] == [780, 74]
+
+
+def test_cli_includes_layout_overlaps(tmp_path):
+    boxes = tmp_path / "boxes.json"
+    boxes.write_text(json.dumps([{"name": "caption_box", "x": 110, "y": 1040, "w": 780, "h": 200},
+                                 {"name": "cta_button", "x": 90, "y": 1500, "w": 900, "h": 140}]))
+    out = json.loads(subprocess.run([sys.executable, str(SCRIPT), "--boxes", str(boxes)],
+                                    capture_output=True, text=True).stdout)
+    assert out["layout"]["universal_3feed"]["fix_overlaps"][0]["boxes"] == ["caption_box", "cta_button"]

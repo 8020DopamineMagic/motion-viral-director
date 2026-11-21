@@ -45,7 +45,11 @@ WEAK_ENDINGS = {"a", "an", "the", "of", "to", "and", "or", "but", "in", "on", "a
 _TIME = re.compile(r"^(?:(\d+):)?(\d{1,2}):(\d{2})[.,](\d{1,3})$")
 _ARROW = re.compile(r"(\S+)\s+-->\s+(\S+)")
 _MARKUP = re.compile(r"<[^>]+>|\{\\[^}]*\}")
-_WORD = re.compile(r"[^\W_]+(?:[’':.\-][^\W_]+)*", re.UNICODE)
+# Hyphens split words ("ten-four" is two spoken words): the stricter count for pace.
+_WORD = re.compile(r"[^\W_]+(?:[’':.][^\W_]+)*", re.UNICODE)
+# Leading markers that are read but not spoken: ">>", a dialogue dash, [RADIO], (whispers), "DRIVER 2:".
+_SPEAKER = re.compile(r"^\s*(?:>>\s*|-\s+|\[[^\]]*\]\s*|\([^)]*\)\s*|[A-Z][A-Z0-9 .'’-]{1,24}:\s+)")
+_SENTENCE_END = re.compile(r"[.?!…][\"'’”)\]]*\s*$")
 
 
 def parse_time(stamp):
@@ -56,8 +60,16 @@ def parse_time(stamp):
     return int(h or 0) * 3600 + int(mnt) * 60 + int(sec) + int(frac.ljust(3, "0")) / 1000.0
 
 
+def strip_speaker(line):
+    prev = None
+    while prev != line:
+        prev, line = line, _SPEAKER.sub("", line, count=1)
+    return line
+
+
 def count_words(text):
-    return len(_WORD.findall(text))
+    """Spoken words: speaker labels and leading sound tags are excluded, hyphenated words split."""
+    return sum(len(_WORD.findall(strip_speaker(ln))) for ln in text.split("\n"))
 
 
 def parse_cues(text):
@@ -108,7 +120,7 @@ def validate(text, aspect="9:16", standard="netflix", style=None, audience="adul
 
         dur = end - start
         plain = " ".join(body)
-        words, chars = count_words(plain), len(plain)
+        words, chars = count_words("\n".join(body)), len(plain)
         cue = {"cue": label, "start_s": round(start, 3), "end_s": round(end, 3), "dur_s": round(dur, 3),
                "lines": len(body), "words": words, "chars": chars}
         if dur <= 0:
@@ -137,7 +149,7 @@ def validate(text, aspect="9:16", standard="netflix", style=None, audience="adul
             if len(line) > profile["max_cpl"]:
                 add("line_length", "error", f"line {n} is {len(line)} chars; maximum is {profile['max_cpl']}")
             last = _WORD.findall(line.lower())
-            if n < len(body) and last and last[-1] in WEAK_ENDINGS:
+            if n < len(body) and last and last[-1] in WEAK_ENDINGS and not _SENTENCE_END.search(line):
                 add("weak_line_break", "warning",
                     f"line {n} ends on '{last[-1]}'; break at a phrase boundary instead")
         cue["issues"] = issues

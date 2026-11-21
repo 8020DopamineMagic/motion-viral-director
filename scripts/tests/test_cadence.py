@@ -92,3 +92,19 @@ def test_cli_modes(tmp_path):
     p = subprocess.run([sys.executable, str(SCRIPT), "--text", "word " * 105, "--runtime", "45"],
                        capture_output=True, text=True)
     assert p.returncode == 1 and json.loads(p.stdout)["fits"] is False
+
+
+# Iteration 2: one counting rule, the stricter one.
+
+def test_hyphenated_words_count_as_spoken_words():
+    assert cc.count_words("forty-seven years, one-nine") == 5
+
+
+def test_numerals_and_acronyms_get_a_spoken_count_note():
+    m = cc.measure("Call HVAC at 3:14 for $400", 2.0)
+    assert any(n["code"] == "spoken_count" for n in m.get("notes", []))
+    assert m["passed"] is True  # a note, not a failure
+
+
+def test_plain_words_get_no_note():
+    assert cc.measure("Your phone rang twice", 2.0).get("notes", []) == []

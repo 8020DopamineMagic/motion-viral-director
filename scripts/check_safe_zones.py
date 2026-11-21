@@ -82,6 +82,31 @@ def check_box(x, y, w, h, platform="universal_3feed", frame_w=1080, frame_h=1920
             "box": [x, y, w, h], "safe_bounds": [x1, y1, x2, y2], "violations": violations, "fix": fix}
 
 
+def _overlap(a, b):
+    ix = min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"])
+    iy = min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"])
+    return (ix, iy) if ix > 0 and iy > 0 else None
+
+
+def _pairs(boxes):
+    found = []
+    for i, a in enumerate(boxes):
+        for b in boxes[i + 1:]:
+            hit = _overlap(a, b)
+            if hit:
+                found.append({"boxes": [a.get("name", "box"), b.get("name", "box")], "overlap_px": list(hit)})
+    return found
+
+
+def check_layout(boxes, platform="universal_3feed", frame_w=1080, frame_h=1920, margins=None):
+    """Boxes are checked one at a time, so their fixes can land on each other. Report both kinds of overlap."""
+    fixed = []
+    for box in boxes:
+        r = check_box(box["x"], box["y"], box["w"], box["h"], platform, frame_w, frame_h, margins)
+        fixed.append({"name": box.get("name", "box"), **(r["fix"] or {k: box[k] for k in ("x", "y", "w", "h")})})
+    return {"overlaps": _pairs(boxes), "fix_overlaps": _pairs(fixed)}
+
+
 def describe(frame_w=1080, frame_h=1920):
     table = {}
     for p in platforms():
@@ -144,7 +169,18 @@ def main(argv=None):
         print(json.dumps({"error": str(exc)}))
         return 2
     passed = all(r["passed"] for r in results)
-    print(json.dumps({"passed": passed, "frame": [fw, fh], "results": results, "note": NOTE}, indent=2))
+    layout, warnings = {}, []
+    if len(boxes) > 1:
+        for p in targets:
+            key = "custom" if custom else p
+            layout[key] = check_layout(boxes, p if not custom else "universal_3feed", fw, fh, custom)
+            if layout[key]["fix_overlaps"]:
+                warnings.append(f"{key}: the per-box fixes collide; move these boxes together and re-run")
+            if layout[key]["overlaps"]:
+                warnings.append(f"{key}: some boxes overlap as given; fine for text inside its own panel, "
+                                "otherwise separate them")
+    print(json.dumps({"passed": passed, "frame": [fw, fh], "results": results, "layout": layout,
+                      "warnings": warnings, "note": NOTE}, indent=2))
     return 0 if passed else 1
 
 
