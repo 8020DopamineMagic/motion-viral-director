@@ -22,4 +22,4 @@ Media checks need `ffmpeg` and `ffprobe` on PATH. Platform rules and tool facts 
 
 ## Releases
 
-The card version pins a tag. To release, bump `metadata.version` in `SKILL.md` and the tag in its section 0 fetch command (a test enforces they match), commit, then tag `v<version>`.
+The card version runs `git clone --branch v<version>`, which accepts a branch or a tag. Each release is published as a branch named `v<version>` pointing at the release commit (Claude Code cloud sessions can push branches but not tags). You can also add a matching tag under GitHub Releases. To release: bump `metadata.version` in `SKILL.md` and the version in its section 0 fetch command (a test enforces they match), commit, push `main`, then push the commit as branch `v<version>`.
