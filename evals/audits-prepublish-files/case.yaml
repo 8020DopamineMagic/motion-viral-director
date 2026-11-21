@@ -1,0 +1,10 @@
+schema_version: "1.1"
+name: audits-prepublish-files
+expected_outcome: |
+  audit.md gives a verdict and finds the planted faults with measured values: audio near
+  -9.9 LUFS with a true peak above 0 dBTP, caption cues 2 and 4 too long and too fast, cue 7
+  overlapping cue 6, the CTA button and logo covered by platform UI, both colour pairs under
+  4.5:1 contrast, and a strobe between 10 and 12 seconds. Each finding comes with a specific
+  fix, and checks that could not be run are listed as pending.
+context:
+  scaffold_script: place-files.sh

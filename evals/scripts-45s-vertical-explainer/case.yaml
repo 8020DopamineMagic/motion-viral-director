@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: scripts-45s-vertical-explainer
+expected_outcome: |
+  av-script.md holds a timed two-column script for a 45 second 9:16 video. Frame 0 is a hard
+  cut to something readable on mute, every spoken line is at or under 180 words per minute,
+  the total word count leaves breathing room, on-screen text is placed inside the vertical
+  safe zone, a loudness target is stated, and the report separates checks that were run from
+  checks that are still pending.

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MotionViralDirectorQAScorecard",
+  "description": "Pre-publish QA record. Create with scripts/qa_scorecard.py init; summarise with report. A pass needs a method and evidence; a measured value that breaks its threshold fails regardless of status.",
+  "type": "object",
+  "required": ["project_id", "format", "checks"],
+  "properties": {
+    "project_id": { "type": "string", "minLength": 1 },
+    "format": { "enum": ["9:16_short", "9:16_medium", "16:9_medium", "16:9_long", "4:5_feed", "1:1_feed"] },
+    "platforms": { "type": "array", "items": { "type": "string" } },
+    "targets": {
+      "type": "object",
+      "properties": {
+        "integrated_lufs": { "type": "number" },
+        "lufs_tolerance": { "type": "number", "minimum": 0 },
+        "max_true_peak": { "type": "number", "maximum": 0 },
+        "max_wpm": { "type": "number", "maximum": 180 },
+        "max_cps": { "type": "number", "maximum": 20 },
+        "min_sec_per_word": { "type": "number", "minimum": 0.3 },
+        "max_chars_per_line": { "type": "number", "maximum": 42 },
+        "min_contrast": { "type": "number", "minimum": 3.0 },
+        "max_flashes": { "type": "number", "maximum": 3 },
+        "min_breathing_pct": { "type": "number", "minimum": 0 }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "propertyNames": { "pattern": "^(story|hook|hierarchy|captions|safe_zones|audio|wcag|compliance)\\.[a-z0-9_]+$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "label": { "type": "string" },
+          "how": { "type": "string" },
+          "status": { "enum": ["pass", "fail", "pending", "na"] },
+          "value": { "type": ["number", "string", "boolean", "null"] },
+          "method": { "enum": ["measured", "computed", "inspected", "attested", null] },
+          "evidence": { "type": "string" }
+        }
+      }
+    }
+  }
+}

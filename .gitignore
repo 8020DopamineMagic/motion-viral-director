@@ -1,0 +1,4 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+*_normalized.mp4
