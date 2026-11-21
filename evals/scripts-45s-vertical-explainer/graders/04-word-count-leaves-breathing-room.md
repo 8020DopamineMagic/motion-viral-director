@@ -4,4 +4,4 @@ focus: trace
 weight: 1
 ---
 
-The total spoken word count is 89 or fewer, which leaves at least 15% of a 45 second runtime free of speech at 140 words per minute
+The main script's total spoken word count, counted as spoken, is 89 or fewer (at least 15% of a 45 s runtime free of speech at 140 words per minute)
